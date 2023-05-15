@@ -36,6 +36,7 @@ extern int Periodo_Media_Movil = 100;
 input string Separador_Operaciones = "--------------PARAMETROS OPERACIONES";
 extern double Pips_SL = 0;
 extern double Pips_TP = 0;
+extern double Lotaje = 0.01;
 input int num_mag = 0;
 //---
 //+------------------------------------------------------------------+
@@ -44,6 +45,9 @@ input int num_mag = 0;
 ENUM_DIR direccion = nada;
 double valor_rsi = 0,
        valor_mm = 0;
+bool compra_realizada = false,
+     venta_realizada = false;
+
 //+------------------------------------------------------------------+
 //| Expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -79,9 +83,36 @@ void OnTick()
    {
       direccion = buy;
    }
+//--- VENTAS
    else if(Bid < valor_mm && valor_rsi >= Nivel_Sobre_Compra)
    {
       direccion = sell;
    }
-}
+//+------------------------------------------------------------------+
+//|              APERTURA DE OPERACIONES
+//+------------------------------------------------------------------+
+//--- COMPRAS
+   if(direccion == buy && compra_realizada == false)
+   {
+      bool m = OrderSend(_Symbol, OP_BUY, Lotaje, Ask, 0, Ask - Pips_SL * 10 * Point, Ask + Pips_TP * 10 * Point, NULL, num_mag);
+      direccion = nada;
+      compra_realizada = true;
+   }
+// VENTAS
+   else if(direccion == sell && venta_realizada == false)
+   {
+      bool j = OrderSend(_Symbol, OP_BUY, Lotaje, Bid, 0, Bid + Pips_SL * 10 * Point, Bid - Pips_TP * 10 * Point, NULL, num_mag);
+      direccion = nada;
+      venta_realizada = true;
+   }
+//---
+   if(compra_realizada == true && valor_rsi >= 50)
+   {
+      compra_realizada = false;
+   }
+   else if(venta_realizada == true && valor_rsi <= 50)
+   {
+      venta_realizada = false;
+   }
+} // FIN ON TICK
 //+------------------------------------------------------------------+
